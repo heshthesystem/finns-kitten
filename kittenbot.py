@@ -47,4 +47,8 @@ async def on_message(message):
         # Let other commands still work
         await bot.process_commands(message)
 
-bot.run("MTM5NjQyNzQxMjc2OTYwNzcxMA.GmfHnt.87wtO6CIemWDm0reQvPC7UFCcGGj4iIEC168AM")
+
+load_dotenv()
+TOKEN = os.getenv("DISCORD_TOKEN")
+
+bot.run(TOKEN)
