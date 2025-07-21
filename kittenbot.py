@@ -4,16 +4,13 @@ import os
 from dotenv import load_dotenv
 import re
 
-# Load .env variables
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 
-# Set up intents and bot
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Track the current count
 current_count = 1
 
 @bot.event
@@ -26,11 +23,9 @@ ALLOWED_CHANNELS = [1396575946105946174]
 async def on_message(message):
     global current_count
 
-    # Ignore bot's own messages
     if message.author.bot:
         return
 
-    # Match messages that look like "meow1", "meow2", etc.
     match = re.fullmatch(r"meow(\d+)", message.content.strip().lower())
     if match:
         number = int(match.group(1))
@@ -45,8 +40,22 @@ async def on_message(message):
             )
             current_count = 1
     else:
-        # Let other commands still work
         await bot.process_commands(message)
 
-
 bot.run(TOKEN)
+
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route("/")
+def home():
+    return "Bot is running!"
+
+if __name__ == "__main__":
+    from threading import Thread
+
+    bot_thread = Thread(target=lambda: bot.run(TOKEN))
+    bot_thread.start()
+
+    app.run(host="0.0.0.0", port=8080)
