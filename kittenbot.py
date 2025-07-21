@@ -31,9 +31,11 @@ async def on_message(message):
         number = int(match.group(1))
 
         if number == current_count:
+            await asyncio.sleep(0.5)  
             await message.add_reaction("✅")
             current_count += 1
         else:
+            await asyncio.sleep(0.5)  
             await message.add_reaction("❌")
             await message.channel.send(
                 f"Wow. {message.author.mention} ruined it at {number}. We have to start over from 1 again. How sad."
