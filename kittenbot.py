@@ -35,7 +35,7 @@ async def on_message(message):
     # Check for the keyword "aito" and reply with the server emoji in any channel
     if "aito" in message.content.lower():
         await asyncio.sleep(1) 
-        await message.reply("<:LionApple:1396221280168050730>🫳 🧒")  # Replace emoji_id with the actual ID of :LionApple:
+        await message.reply("<:LionApple:1396221280168050730> 🫳 🧒")  # Replace emoji_id with the actual ID of :LionApple:
         await message.channel.send(
                 f"Aito mention? Ew. He touches kids. Beware of him. He's an ableist *pervert*. We  talk shit about people like him in this server. He needs a reality check, but unfortunately, reality is too big for his little brain to comprehend."
             )
