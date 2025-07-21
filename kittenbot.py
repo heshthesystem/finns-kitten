@@ -3,6 +3,7 @@ from discord.ext import commands
 import os
 from dotenv import load_dotenv
 import re
+import asyncio
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -35,7 +36,7 @@ async def on_message(message):
             await message.add_reaction("✅")
             current_count += 1
         else:
-            await asyncio.sleep(0.5)  
+            
             await message.add_reaction("❌")
             await message.channel.send(
                 f"Wow. {message.author.mention} ruined it at {number}. We have to start over from 1 again. How sad."
