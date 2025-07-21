@@ -42,10 +42,10 @@ async def on_message(message):
 
         # Prevent the same user from counting twice consecutively
         if message.author.id == last_user:
+            await asyncio.sleep(1)  # Add a short delay to avoid rate limits
+            await message.add_reaction("⚠️") # Add the yellow exclamation mark emoji
             await message.channel.send(
-                await asyncio.sleep(1)  # Add a short delay to avoid rate limits
-                await message.add_reaction("⚠️") # Add the yellow exclamation mark emoji
-                f"{message.author.mention}, you can't count twice in a row, idiot! That wouldn't be fair to the other nerds who want to count. Not that I care *that* much. But it *is* a rule, so you should follow it. If you don't, I'll just ignore your message and not count it. So there! Ha! Take that, asshole!"
+                f"{message.author.mention}, you can't count twice in a row, idiot! That wouldn't be fair to the other nerds who want to count. Not that I care. But it *is* a bit selfish, so if you do, I'll just ignore your message and not count it. So there! Ha! Take that, asshole!"
             )
             return
 
