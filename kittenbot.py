@@ -13,6 +13,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 # Set up bot intents and commands
 intents = discord.Intents.default()
 intents.message_content = True
+intents.messages = True  # Enable message delete events
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 current_count = 1
@@ -31,7 +32,12 @@ async def on_message(message):
     if message.author.bot:
         return
 
-    # Ensure the message is in the allowed channel
+    # Check for the keyword "aito" and reply with the server emoji in any channel
+    if "aito" in message.content.lower():
+        await message.channel.send("<:LionApple:emoji_id>")  # Replace emoji_id with the actual ID of :LionApple:
+        return
+
+    # Ensure the message is in the allowed channel for counting
     if message.channel.id not in ALLOWED_CHANNELS:
         return
 
@@ -43,9 +49,9 @@ async def on_message(message):
         # Prevent the same user from counting twice consecutively
         if message.author.id == last_user:
             await asyncio.sleep(1)  # Add a short delay to avoid rate limits
-            await message.add_reaction("⚠️") # Add the yellow exclamation mark emoji
+            await message.add_reaction("⚠️")  # Add the yellow exclamation mark emoji
             await message.channel.send(
-                f"{message.author.mention}, you can't count twice in a row, idiot! That wouldn't be fair to the other nerds who want to count. Not that I care. But it *is* a bit selfish, so if you do, I'll just ignore your message and not count it. So there! Ha! Take that, asshole!"
+                f"{message.author.mention}, you can't count twice in a row, idiot! That wouldn't be fair to the other nerds who want to count. Not that I care. But it *is* a bit selfish, so if you do, I'll just __ignore your message and not count it__. So there! Ha! Take that, *asshole*!"
             )
             return
 
@@ -58,12 +64,27 @@ async def on_message(message):
             await asyncio.sleep(1)  # Add a short delay to avoid rate limits
             await message.add_reaction("❌")
             await message.channel.send(
-                f"Wow. {message.author.mention} ruined it at {number}. What a loser! Now we have to start over from 1 again. How embarrassing! You should be ashamed of yourself. I mean, really, how hard is it to count to {current_count}? It's not rocket science! But noooo, you had to mess it up. So now we have to start over. Thanks a lot, jerk!"
+                f"Wow. {message.author.mention} has *ruined* it at {number}. What a **loser**! Now we have to start **all over again** from __1__. How *embarrassing*! You should be ashamed of yourself. I mean, really, how hard is it to count to *{current_count}*? It's not rocket science! But noooo, you had to mess it up. So now we have to start over. Thanks a lot, *jerk*!"
             )
             current_count = 1
             last_user = None  # Reset the last user
     else:
         await bot.process_commands(message)
+
+@bot.event
+async def on_message_delete(message):
+    # Ensure the message is in the allowed channel for counting
+    if message.channel.id not in ALLOWED_CHANNELS:
+        return
+
+    # Match messages that look like "meow1", "meow2", etc.
+    match = re.fullmatch(r"meow(\d+)", message.content.strip().lower())
+    if match:
+        number = int(match.group(1))
+        next_number = current_count  # The next expected number
+        await message.channel.send(
+            f"Tch, {message.author.mention} has deleted their number, meow{number}. How stupid. What even makes a person delete their number? Clearly, it wasn't a mistake, or I'd be telling you start over. You're lucky I don't make you start over, but I won't. So just keep counting, okay? The next number is {next_number}. Don't mess it up again!"
+        )
 
 # Create a simple HTTP server for Render
 app = Flask(__name__)
