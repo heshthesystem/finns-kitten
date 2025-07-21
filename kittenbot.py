@@ -34,7 +34,7 @@ async def on_message(message):
 
     # Check for the keyword "aito" and reply with the server emoji in any channel
     if "aito" in message.content.lower():
-        await message.reply(":LionApple:")  # Replace emoji_id with the actual ID of :LionApple:
+        await message.reply("<:LionApple:1396221280168050730>")  # Replace emoji_id with the actual ID of :LionApple:
         return
 
     # Ensure the message is in the allowed channel for counting
