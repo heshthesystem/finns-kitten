@@ -43,20 +43,22 @@ async def on_message(message):
         # Prevent the same user from counting twice consecutively
         if message.author.id == last_user:
             await message.channel.send(
-                f"{message.author.mention}, you can't count twice in a row!"
+                await asyncio.sleep(1)  # Add a short delay to avoid rate limits
+                await message.add_reaction("⚠️") # Add the yellow exclamation mark emoji
+                f"{message.author.mention}, you can't count twice in a row, idiot! That wouldn't be fair to the other nerds who want to count. Not that I care *that* much. But it *is* a rule, so you should follow it. If you don't, I'll just ignore your message and not count it. So there! Ha! Take that, asshole!"
             )
             return
 
         if number == current_count:
-            await asyncio.sleep(0.5)  # Add a short delay to avoid rate limits
+            await asyncio.sleep(1)  # Add a short delay to avoid rate limits
             await message.add_reaction("✅")
             current_count += 1
             last_user = message.author.id  # Update the last user
         else:
-            await asyncio.sleep(0.5)  # Add a short delay to avoid rate limits
+            await asyncio.sleep(1)  # Add a short delay to avoid rate limits
             await message.add_reaction("❌")
             await message.channel.send(
-                f"Wow. {message.author.mention} ruined it at {number}. We have to start over from 1 again. How sad."
+                f"Wow. {message.author.mention} ruined it at {number}. What a loser! Now we have to start over from 1 again. How embarrassing! You should be ashamed of yourself. I mean, really, how hard is it to count to {current_count}? It's not rocket science! But noooo, you had to mess it up. So now we have to start over. Thanks a lot, jerk!"
             )
             current_count = 1
             last_user = None  # Reset the last user
