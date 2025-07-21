@@ -64,4 +64,4 @@ if __name__ == "__main__":
 
     # Get the port from the environment variable
     port = int(os.getenv("PORT", 8080))
-    app.run(host="0.0.0.0")
+    app.run(host="0.0.0.0", port=port)
