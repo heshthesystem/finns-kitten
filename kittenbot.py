@@ -20,6 +20,7 @@ current_count = 1
 async def on_ready():
     print(f"✅ Logged in as {bot.user}")
 
+ALLOWED_CHANNELS = [1396575946105946174]  
 
 @bot.event
 async def on_message(message):
@@ -47,8 +48,5 @@ async def on_message(message):
         # Let other commands still work
         await bot.process_commands(message)
 
-
-load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
 
 bot.run(TOKEN)
