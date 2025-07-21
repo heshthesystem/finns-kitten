@@ -34,7 +34,7 @@ async def on_message(message):
 
     # Check for the keyword "aito" and reply with the server emoji in any channel
     if "aito" in message.content.lower():
-        await message.channel.send("<:LionApple:emoji_id>")  # Replace emoji_id with the actual ID of :LionApple:
+        await message.reply(":LionApple:")  # Replace emoji_id with the actual ID of :LionApple:
         return
 
     # Ensure the message is in the allowed channel for counting
@@ -50,7 +50,7 @@ async def on_message(message):
         if message.author.id == last_user:
             await asyncio.sleep(1)  # Add a short delay to avoid rate limits
             await message.add_reaction("⚠️")  # Add the yellow exclamation mark emoji
-            await message.channel.send(
+            await message.reply(
                 f"{message.author.mention}, you can't count twice in a row, idiot! That wouldn't be fair to the other nerds who want to count. Not that I care. But it *is* a bit selfish, so if you do, I'll just __ignore your message and not count it__. So there! Ha! Take that, *asshole*!"
             )
             return
@@ -63,7 +63,7 @@ async def on_message(message):
         else:
             await asyncio.sleep(1)  # Add a short delay to avoid rate limits
             await message.add_reaction("❌")
-            await message.channel.send(
+            await message.reply(
                 f"Wow. {message.author.mention} has *ruined* it at {number}. What a **loser**! Now we have to start **all over again** from __1__. How *embarrassing*! You should be ashamed of yourself. I mean, really, how hard is it to count to *{current_count}*? It's not rocket science! But noooo, you had to mess it up. So now we have to start over. Thanks a lot, *jerk*!"
             )
             current_count = 1
