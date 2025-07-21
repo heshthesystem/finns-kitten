@@ -16,6 +16,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 current_count = 1
+last_user = None  # Track the last user who counted
 
 @bot.event
 async def on_ready():
@@ -25,26 +26,40 @@ ALLOWED_CHANNELS = [1396575946105946174]
 
 @bot.event
 async def on_message(message):
-    global current_count
+    global current_count, last_user
 
     if message.author.bot:
         return
 
+    # Ensure the message is in the allowed channel
+    if message.channel.id not in ALLOWED_CHANNELS:
+        return
+
+    # Match messages that look like "meow1", "meow2", etc.
     match = re.fullmatch(r"meow(\d+)", message.content.strip().lower())
     if match:
         number = int(match.group(1))
 
+        # Prevent the same user from counting twice consecutively
+        if message.author.id == last_user:
+            await message.channel.send(
+                f"{message.author.mention}, you can't count twice in a row!"
+            )
+            return
+
         if number == current_count:
-            await asyncio.sleep(0.5)  
+            await asyncio.sleep(0.5)  # Add a short delay to avoid rate limits
             await message.add_reaction("✅")
             current_count += 1
+            last_user = message.author.id  # Update the last user
         else:
-            await asyncio.sleep(0.5)  
+            await asyncio.sleep(0.5)  # Add a short delay to avoid rate limits
             await message.add_reaction("❌")
             await message.channel.send(
                 f"Wow. {message.author.mention} ruined it at {number}. We have to start over from 1 again. How sad."
             )
             current_count = 1
+            last_user = None  # Reset the last user
     else:
         await bot.process_commands(message)
 
