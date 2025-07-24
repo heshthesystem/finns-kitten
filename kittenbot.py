@@ -1,4 +1,4 @@
-import discord
+iimport discord 
 from discord.ext import commands
 import os
 from dotenv import load_dotenv
@@ -19,6 +19,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 current_count = 1
 last_user = None  # Track the last user who counted
+message_toggle = True  # Toggle for aito/raylen messages
 
 @bot.event
 async def on_ready():
@@ -38,35 +39,56 @@ async def flkcountfix(interaction: discord.Interaction, number: int):
     current_count = number
     await interaction.response.send_message(f"Count manually set to meow{current_count}. Don't mess it up!", ephemeral=True)
 
+# Slash command to toggle aito/raylen messages
+@bot.tree.command(name="flkmessagetoggle", description="Toggle aito/raylen auto-replies on or off.")
+async def flkmessagetoggle(interaction: discord.Interaction):
+    global message_toggle
+    message_toggle = not message_toggle
+    status = "enabled" if message_toggle else "disabled"
+    await interaction.response.send_message(f"Aito/Raylen replies are now **{status}**.", ephemeral=True)
+
 ALLOWED_CHANNELS = [1396575946105946174]
 
 @bot.event
 async def on_message(message):
-    global current_count, last_user
+    global current_count, last_user, message_toggle
 
     if message.author.bot:
         return
 
-    # Check for the keyword "aito" and reply with the server emoji in any channel
-    if "aito" in message.content.lower():
-        await asyncio.sleep(1)
-        await message.reply("<:LionApple:1396221280168050730> 🫳 🧒")
-        await message.channel.send(
-            f"Aito mention? Ew. He touches kids. Beware of him. He's an ableist *pervert*. We talk shit about people like him in this server. He needs a reality check, but unfortunately, reality is too big for his little brain to comprehend."
-        )
-        return
-    
-    if "raylen" in message.content.lower():
-        await asyncio.sleep(1)
-        await message.reply("Raylen mention? Ugh. She *clearly* doesn't care for the safety of other people, or maybe she would actually ban Aito, who is *clearly* a __**pervert**__. She can't even admit when she is in the wrong! She is *not* fit to run a server of __over *1000* people__!")
-        return
+    content = message.content.strip()
+
+    # Handle toggled messages for aito/raylen
+    if message_toggle:
+        lowered = content.lower()
+        if "aito" in lowered:
+            await asyncio.sleep(1)
+            await message.reply("<:LionApple:1396221280168050730> 🫳 🧒")
+            await message.channel.send(
+                f"Aito mention? Ew. He touches kids. Beware of him. He's an ableist *pervert*. We talk shit about people like him in this server. He needs a reality check, but unfortunately, reality is too big for his little brain to comprehend."
+            )
+            return
+        if "raylen" in lowered:
+            await asyncio.sleep(1)
+            await message.reply("Raylen mention? Ugh. She *clearly* doesn't care for the safety of other people, or maybe she would actually ban Aito, who is *clearly* a __**pervert**__. She can't even admit when she is in the wrong! She is *not* fit to run a server of __over *1000* people__!")
+            return
 
     # Ensure the message is in the allowed channel for counting
     if message.channel.id not in ALLOWED_CHANNELS:
         return
 
-    # Match messages that look like "meow1", "meow2", etc.
-    match = re.fullmatch(r"meow(\d+)", message.content.strip().lower())
+    # NEW: Detect "meow 123" (space between)
+    if re.fullmatch(r"meow\s+\d+", content.lower()):
+        await message.reply("message example")  # Meow with space
+        return
+
+    # NEW: Detect just "123" (a number only)
+    if re.fullmatch(r"\d+", content):
+        await message.reply("message example")  # Just a number
+        return
+
+    # Match exact "meow123" (no space)
+    match = re.fullmatch(r"meow(\d+)", content.lower())
     if match:
         number = int(match.group(1))
 
@@ -97,7 +119,6 @@ async def on_message(message):
 
 @bot.event
 async def on_message_delete(message):
-    # Ensure the message is in the allowed channel for counting
     if message.channel.id not in ALLOWED_CHANNELS:
         return
 
