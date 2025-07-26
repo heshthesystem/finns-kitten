@@ -1,11 +1,13 @@
 import discord 
-from discord.ext import commands
+from discord.ext import commands, tasks
 import os
 from dotenv import load_dotenv
 import re
 import asyncio
+import random
 from flask import Flask
 from discord import app_commands  # Added for slash commands
+from datetime import datetime, timedelta
 
 # Load environment variables
 load_dotenv()
@@ -20,6 +22,10 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 current_count = 1
 last_user = None  # Track the last user who counted
 message_toggle = True  # Toggle for aito/raylen messages
+ALLOWED_CHANNELS = [1396575946105946174]
+
+# Track last valid count timestamp
+last_count_time = datetime.utcnow()
 
 @bot.event
 async def on_ready():
@@ -31,13 +37,15 @@ async def on_ready():
         print(f"❌ Failed to sync commands: {e}")
     print(f"✅ Logged in as {bot.user}")
 
+    check_counting_idle.start()  # Start the background task
+
 # Slash command to manually set the current count
 @bot.tree.command(name="flkcountfix", description="Manually set the current count.")
 @app_commands.describe(number="The number to set the count to.")
 async def flkcountfix(interaction: discord.Interaction, number: int):
     global current_count
     current_count = number
-    await interaction.response.send_message(f"Count manually set to meow{current_count}. Don't mess it up!", ephemeral=True)
+    await interaction.response.send_message(f"Count manually set to meow{current_count}. Don't mess it up!")
 
 # Slash command to toggle aito/raylen messages
 @bot.tree.command(name="flkmessagetoggle", description="Toggle aito/raylen auto-replies on or off.")
@@ -45,13 +53,11 @@ async def flkmessagetoggle(interaction: discord.Interaction):
     global message_toggle
     message_toggle = not message_toggle
     status = "enabled" if message_toggle else "disabled"
-    await interaction.response.send_message(f"Aito/Raylen replies are now **{status}**.", ephemeral=True)
-
-ALLOWED_CHANNELS = [1396575946105946174]
+    await interaction.response.send_message(f"Aito/Raylen replies are now **{status}**.")
 
 @bot.event
 async def on_message(message):
-    global current_count, last_user, message_toggle
+    global current_count, last_user, message_toggle, last_count_time
 
     if message.author.bot:
         return
@@ -73,26 +79,21 @@ async def on_message(message):
             await message.reply("Raylen mention? Ugh. She *clearly* doesn't care for the safety of other people, or maybe she would actually ban Aito, who is *clearly* a __**pervert**__. She can't even admit when she is in the wrong! She is *not* fit to run a server of __over *1000* people__!")
             return
 
-    # Ensure the message is in the allowed channel for counting
     if message.channel.id not in ALLOWED_CHANNELS:
         return
 
-    # NEW: Detect "meow 123" (space between)
     if re.fullmatch(r"meow\s+\d+", content.lower()):
-        await message.reply("message example")  # Meow with space
+        await message.reply("Tch. You're not supposed to put a *space* idiot. That's just boring. Like, come *on*, who cares about a space? We're literally counting by meowing. I'm not going to count that, because it looks ugly.")
         return
 
-    # NEW: Detect just "123" (a number only)
     if re.fullmatch(r"\d+", content):
-        await message.reply("message example")  # Just a number
+        await message.reply("Seriously? You didn't meow? How *boooorrrringggg*. Go be boring in another server, go on, shoo. Why would you even think that would count? Like, *seriously*, the whole point is that you *count* in __meows__. Or maybe you think Ky was 'cringe' for suggesting this bot? If so, get lost, you stupid prick. Your number doesn't count, loser!")
         return
 
-    # Match exact "meow123" (no space)
     match = re.fullmatch(r"meow(\d+)", content.lower())
     if match:
         number = int(match.group(1))
 
-        # Prevent the same user from counting twice consecutively
         if message.author.id == last_user:
             await asyncio.sleep(1)
             await message.add_reaction("⚠️")
@@ -106,6 +107,7 @@ async def on_message(message):
             await message.add_reaction("✅")
             current_count += 1
             last_user = message.author.id
+            last_count_time = datetime.utcnow()  # Update time of last correct count
         else:
             await asyncio.sleep(1)
             await message.add_reaction("❌")
@@ -129,6 +131,24 @@ async def on_message_delete(message):
         await message.channel.send(
             f"Tch, {message.author.mention} has deleted their number, meow{number}. How stupid. What even makes a person delete their number? Clearly, it wasn't a mistake, or I'd be telling you start over. You're lucky I don't make you start over, but I won't. So just keep counting, okay? The next number is {next_number}. Don't mess it up again!"
         )
+
+# ⏱️ Task to check for idle time
+@tasks.loop(minutes=5)
+async def check_counting_idle():
+    now = datetime.utcnow()
+    time_passed = (now - last_count_time).total_seconds()
+
+    # If silence longer than a random threshold
+    threshold = getattr(check_counting_idle, "next_delay", random.randint(2700, 10800))  # 45-180 mins
+
+    if time_passed > threshold:
+        check_counting_idle.next_delay = random.randint(2700, 10800)  # set next threshold
+        channel = bot.get_channel(ALLOWED_CHANNELS[0])
+        if channel:
+            await channel.send("message example")
+        # Reset last_count_time so the next message is based on new timer
+        global last_count_time
+        last_count_time = now
 
 # Create a simple HTTP server for Render
 app = Flask(__name__)
