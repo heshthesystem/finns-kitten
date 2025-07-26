@@ -25,6 +25,7 @@ message_toggle = True  # Toggle for aito/raylen messages
 ALLOWED_CHANNELS = [1396575946105946174]
 
 # Track last valid count timestamp
+global last_count_time
 last_count_time = datetime.utcnow()
 
 # 🔧 Message map for testing
@@ -41,6 +42,7 @@ MESSAGE_MAP = {
 # ⏱️ Task to check for idle time
 @tasks.loop(minutes=5)
 async def check_counting_idle():
+    global last_count_time
     now = datetime.utcnow()
     time_passed = (now - last_count_time).total_seconds()
 
@@ -51,7 +53,6 @@ async def check_counting_idle():
         channel = bot.get_channel(ALLOWED_CHANNELS[0])
         if channel:
             await channel.send(MESSAGE_MAP["inactivitycount"].format(number=current_count))
-        global last_count_time
         last_count_time = now
 
 @bot.event
@@ -174,7 +175,6 @@ async def on_message_delete(message):
     if match:
         number = int(match.group(1))
         next_number = current_count
-        await message.channel.send(MESSAGE_MAP["countdelete"].format(mention=message.author.mention, number=number))
 
 # Create a simple HTTP server for Render
 app = Flask(__name__)
