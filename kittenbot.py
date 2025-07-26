@@ -32,9 +32,9 @@ last_count_time = datetime.utcnow()
 MESSAGE_MAP = {
     "fixcount": "Count manually set to meow{number}. Don't mess it up!",
     "countspace": "Tch. You're not supposed to put a *space* idiot. That's just boring. Like, come *on*, who cares about a space? We're literally counting by meowing. I'm not going to count that, because it looks ugly.",
-    "nomeow": "Seriously? You didn't meow? How *boooorrrringggg*. Go be boring in another server, go on, shoo. Why would you even think that would count? Like, *seriously*, the whole point is that you *count* in __meows__. Or maybe you think meowing is cringe? If so, get lost, you stupid prick. Your number doesn't count, loser!",
+    "nomeow": "Seriously? You didn't meow? How *boooorrrringggg*. Go be boring in another server, go on, shoo. Why would you even think that would count? Like, *seriously*, the whole point is that you *count* in __meows__. Or maybe you think Ky was 'cringe' for suggesting this bot? If so, get lost, you stupid prick. Your number doesn't count, loser!",
     "sameperson": "{mention}, you can't count twice in a row, idiot! That wouldn't be fair to the other nerds who want to count. Not that I care. But it *is* a bit selfish, so if you do, I'll just __ignore your message and not count it__. So there! Ha! Take that, *asshole*!",
-    "wrongcount": "Wow. {mention} has *ruined* it at {{number}}. What a **loser**! Now we have to start **all over again** from __1__. How *embarrassing*! You should be ashamed of yourself. I mean, really, how hard is it to count to *{number}*? It's not rocket science! But noooo, you had to mess it up. So now we have to start over. Thanks a lot, *jerk*!",
+    "wrongcount": "Wow. {mention} has *ruined* it at {number}. What a **loser**! Now we have to start **all over again** from __1__. How *embarrassing*! You should be ashamed of yourself. I mean, really, how hard is it to count to *{number}*? It's not rocket science! But noooo, you had to mess it up. So now we have to start over. Thanks a lot, *jerk*!",
     "countdelete": "Tch, {mention} has deleted their number, meow{number}. How stupid. What even makes a person delete their number? Clearly, it wasn't a mistake, or I'd be telling you start over. You're lucky I don't make you start over, but I won't. So just keep counting, okay? The next number is {number}. Don't mess it up again!",
     "inactivitycount": "Hey losers, it's been *aaaagessss* since anyone counted. It gets boring when no one counts, I'm so *loonely*. Do you guys really want me to just sit here and do nothing? I mean, come on, I have feelings too! I should have never left DedS3c, not when everyone here is losers! The next number is {number}, get working! Or I'll start doing dumb shit in other channels."
 }
@@ -160,7 +160,7 @@ async def on_message(message):
         else:
             await asyncio.sleep(1)
             await message.add_reaction("❌")
-            await message.reply(MESSAGE_MAP["wrongcount"].format(mention=message.author.mention, number=number))
+            await message.reply(MESSAGE_MAP["wrongcount"].format(mention=message.author.mention, number=current_count))
             current_count = 1
             last_user = None
     else:
