@@ -1,4 +1,4 @@
-import discord 
+import discord
 from discord.ext import commands, tasks
 import os
 from dotenv import load_dotenv
@@ -6,7 +6,7 @@ import re
 import asyncio
 import random
 from flask import Flask
-from discord import app_commands  # Added for slash commands
+from discord import app_commands
 from datetime import datetime, timedelta
 
 # Load environment variables
@@ -16,16 +16,26 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 # Set up bot intents and commands
 intents = discord.Intents.default()
 intents.message_content = True
-intents.messages = True  # Enable message delete events
+intents.messages = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
 current_count = 1
-last_user = None  # Track the last user who counted
-message_toggle = True  # Toggle for aito/raylen messages
+last_user = None
+message_toggle = True
 ALLOWED_CHANNELS = [1396575946105946174]
-
-# Track last valid count timestamp
 last_count_time = datetime.utcnow()
+OWNER_ID = 1385289323628466216
+
+# Predefined messages
+message_templates = {
+    "fixcount": "Count manually set to meow{number}. Don't mess it up!",
+    "countspace": "Tch. You're not supposed to put a *space* idiot...",
+    "nomeow": "Seriously? You didn't meow? How *boooorrrringggg*...",
+    "sameperson": "{mention}, you can't count twice in a row, idiot!...",
+    "wrongcount": "Wow. {mention} has *ruined* it at {number}. What a **loser**!...",
+    "countdelete": "Tch, {mention} has deleted their number, meow{number}. How stupid...",
+    "inactivitycount": "Hey losers, it's been *aaaagessss* since anyone counted... The next number is {number}, get working!..."
+}
 
 @bot.event
 async def on_ready():
@@ -36,121 +46,42 @@ async def on_ready():
     except Exception as e:
         print(f"❌ Failed to sync commands: {e}")
     print(f"✅ Logged in as {bot.user}")
+    check_counting_idle.start()
 
-    check_counting_idle.start()  # Start the background task
+@bot.tree.command(name="flkmessageclist", description="List all message keys.")
+async def flkmessageclist(interaction: discord.Interaction):
+    if interaction.user.id != OWNER_ID:
+        await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
+        return
+    msg = "Available message keys:\n" + "\n".join(f"- {k}" for k in message_templates.keys())
+    await interaction.response.send_message(msg, ephemeral=True)
 
-# Slash command to manually set the current count
-@bot.tree.command(name="flkcountfix", description="Manually set the current count.")
-@app_commands.describe(number="The number to set the count to.")
-async def flkcountfix(interaction: discord.Interaction, number: int):
-    global current_count
-    current_count = number
-    await interaction.response.send_message(f"Count manually set to meow{current_count}. Don't mess it up!")
-
-# Slash command to toggle aito/raylen messages
-@bot.tree.command(name="flkmessagetoggle", description="Toggle aito/raylen auto-replies on or off.")
-async def flkmessagetoggle(interaction: discord.Interaction):
-    global message_toggle
-    message_toggle = not message_toggle
-    status = "enabled" if message_toggle else "disabled"
-    await interaction.response.send_message(f"Aito/Raylen replies are now **{status}**.")
-
-@bot.event
-async def on_message(message):
-    global current_count, last_user, message_toggle, last_count_time
-
-    if message.author.bot:
+@bot.tree.command(name="flkmessagectest", description="Test a specific message.")
+@app_commands.describe(message="The name of the message to test.")
+async def flkmessagectest(interaction: discord.Interaction, message: str):
+    if interaction.user.id != OWNER_ID:
+        await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
         return
 
-    content = message.content.strip()
-
-    # Handle toggled messages for aito/raylen
-    if message_toggle:
-        lowered = content.lower()
-        if "aito" in lowered:
-            await asyncio.sleep(1)
-            await message.reply("<:LionApple:1396221280168050730> 🫳 🧒")
-            await message.channel.send(
-                f"Aito mention? Ew. He touches kids. Beware of him. He's an ableist *pervert*. We talk shit about people like him in this server. He needs a reality check, but unfortunately, reality is too big for his little brain to comprehend."
-            )
-            return
-        if "raylen" in lowered:
-            await asyncio.sleep(1)
-            await message.reply("Raylen mention? Ugh. She *clearly* doesn't care for the safety of other people, or maybe she would actually ban Aito, who is *clearly* a __**pervert**__. She can't even admit when she is in the wrong! She is *not* fit to run a server of __over *1000* people__!")
-            return
-
-    if message.channel.id not in ALLOWED_CHANNELS:
+    template = message_templates.get(message)
+    if not template:
+        await interaction.response.send_message("Invalid message key.", ephemeral=True)
         return
 
-    if re.fullmatch(r"meow\s+\d+", content.lower()):
-        await message.reply("Tch. You're not supposed to put a *space* idiot. That's just boring. Like, come *on*, who cares about a space? We're literally counting by meowing. I'm not going to count that, because it looks ugly.")
+    output = template.format(mention=interaction.user.mention, number=current_count)
+    await interaction.response.send_message(output)
+
+@bot.tree.command(name="flkmessagectestall", description="Test all messages.")
+async def flkmessagectestall(interaction: discord.Interaction):
+    if interaction.user.id != OWNER_ID:
+        await interaction.response.send_message("You don't have permission to use this command.", ephemeral=True)
         return
 
-    if re.fullmatch(r"\d+", content):
-        await message.reply("Seriously? You didn't meow? How *boooorrrringggg*. Go be boring in another server, go on, shoo. Why would you even think that would count? Like, *seriously*, the whole point is that you *count* in __meows__. Or maybe you think Ky was 'cringe' for suggesting this bot? If so, get lost, you stupid prick. Your number doesn't count, loser!")
-        return
+    for key, template in message_templates.items():
+        await interaction.channel.send(f"**{key}**: {template.format(mention=interaction.user.mention, number=current_count)}")
+    await interaction.response.send_message("All test messages sent.", ephemeral=True)
 
-    match = re.fullmatch(r"meow(\d+)", content.lower())
-    if match:
-        number = int(match.group(1))
-
-        if message.author.id == last_user:
-            await asyncio.sleep(1)
-            await message.add_reaction("⚠️")
-            await message.reply(
-                f"{message.author.mention}, you can't count twice in a row, idiot! That wouldn't be fair to the other nerds who want to count. Not that I care. But it *is* a bit selfish, so if you do, I'll just __ignore your message and not count it__. So there! Ha! Take that, *asshole*!"
-            )
-            return
-
-        if number == current_count:
-            await asyncio.sleep(1)
-            await message.add_reaction("✅")
-            current_count += 1
-            last_user = message.author.id
-            last_count_time = datetime.utcnow()  # Update time of last correct count
-        else:
-            await asyncio.sleep(1)
-            await message.add_reaction("❌")
-            await message.reply(
-                f"Wow. {message.author.mention} has *ruined* it at {number}. What a **loser**! Now we have to start **all over again** from __1__. How *embarrassing*! You should be ashamed of yourself. I mean, really, how hard is it to count to *{current_count}*? It's not rocket science! But noooo, you had to mess it up. So now we have to start over. Thanks a lot, *jerk*!"
-            )
-            current_count = 1
-            last_user = None
-    else:
-        await bot.process_commands(message)
-
-@bot.event
-async def on_message_delete(message):
-    if message.channel.id not in ALLOWED_CHANNELS:
-        return
-
-    match = re.fullmatch(r"meow(\d+)", message.content.strip().lower())
-    if match:
-        number = int(match.group(1))
-        next_number = current_count
-        await message.channel.send(
-            f"Tch, {message.author.mention} has deleted their number, meow{number}. How stupid. What even makes a person delete their number? Clearly, it wasn't a mistake, or I'd be telling you start over. You're lucky I don't make you start over, but I won't. So just keep counting, okay? The next number is {next_number}. Don't mess it up again!"
-        )
-
-# ⏱️ Task to check for idle time
-@tasks.loop(minutes=5)
-async def check_counting_idle():
-    now = datetime.utcnow()
-    time_passed = (now - last_count_time).total_seconds()
-
-    # If silence longer than a random threshold
-    threshold = getattr(check_counting_idle, "next_delay", random.randint(2700, 10800))  # 45-180 mins
-
-    if time_passed > threshold:
-        check_counting_idle.next_delay = random.randint(2700, 10800)  # set next threshold
-        channel = bot.get_channel(ALLOWED_CHANNELS[0])
-        if channel:
-            await channel.send("message example")
-        # Reset last_count_time so the next message is based on new timer
-        global last_count_time
-        last_count_time = now
-
-# Create a simple HTTP server for Render
+# Flask webserver for Render
 app = Flask(__name__)
 
 @app.route("/")
@@ -160,7 +91,6 @@ def home():
 if __name__ == "__main__":
     from threading import Thread
 
-    # Run the bot in a separate thread
     bot_thread = Thread(target=lambda: bot.run(TOKEN))
     bot_thread.start()
 
